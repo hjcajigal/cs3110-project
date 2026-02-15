@@ -4,7 +4,8 @@ My project will be a website that allows you to play chess and certain chess var
 
 ## Feature Roadmap (Overall Plan)
 1. Basic chess functionality (movement/capturing)
-3. Turn timers
+2. Front page.
+3. Turn Timers
 4. Advanced chess functionality (en passant, castling, promotion)
 5. Endgame detection (checkmates and draws)
 6. Standard variants
@@ -12,4 +13,4 @@ My project will be a website that allows you to play chess and certain chess var
 8. Other variants
 
 ## Sprint Plan
-This first sprint I plan on designing a basic layout for the webiste. I will also start laying the groundwork for chess functionality.
+This first sprint I plan on setting up the basic chess page layout and  getting the basic chess functionality completed.
