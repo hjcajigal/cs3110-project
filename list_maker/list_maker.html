@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Harrison's List Maker</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../style.css">
+        <link rel="stylesheet" href="list_maker.css">
+    </head>
+    <body>
+        <header class="no-print">
+            <h1>Harrison's List Maker</h1>
+        </header>
+
+        <section id="editor" class="no-print">
+            <h2>Editor</h2>
+            <form id="linameform">
+                <fieldset>
+                    <legend>List Name</legend>
+                    <div>
+                        <input type="text" id="linameinput" name="linameinput" placeholder="Enter list name">
+                    </div>
+                    <div>
+                        <input type="submit" id="linamebtn" value="Edit">
+                    </div>
+                </fieldset>
+            </form>
+            
+            <form id="litypeform">
+                <fieldset>
+                    <legend>List Type</legend>
+                    <div id="litypeinput">
+                        <input type="radio" id="litype1" name="litype" value="ul">
+                        <label for="litype1">Unordered</label>
+
+                        <input type="radio" id="litype2" name="litype" value="ol">
+                        <label for="litype2">Ordered</label>
+                    </div>
+                    
+                    <div>
+                        <input type="submit" id="litypebtn" value="Edit">
+                    </div>
+                </fieldset>
+            </form>
+
+            <form id="liitemform">
+                <fieldset>
+                    <legend>List Items</legend>
+                    <div>
+                        <input type="text" id="liiteminput" placeholder="Enter list item here">
+                    </div>
+                    <div>
+                        <input type="submit" id="liitembtn" value="Add">
+                    </div>
+                </fieldset>
+            </form>
+
+            <input type="submit" id="printbtn" value="Print">
+        </section>
+
+        <section id="preview">
+            <header class="no-print">
+                <h2>Preview</h2>
+                <div>Click on an item to remove it</div>
+            </header>
+
+            <div id="lioutput" >
+                <h3 id="linameoutput">Example Name</h3>
+
+                <ul id="litypeoutput">
+                    <li class="li-item">Example Item</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer class="no-print">
+            <a href="/index.html">Back</a>
+        </footer>
+
+        <script src="list_maker.js" async defer></script>
+    </body>
+</html>
