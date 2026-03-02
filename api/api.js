@@ -1,13 +1,20 @@
 const http = require("http");
 const url = require("url");
-var items = ["Apple", "Banana", "Cherry"];
+var characters = ["Larry", "Harry", "Mike"];
 
 const handleRequest = (req, res) => {
-    const parsedUrl = url.parse(req.url, true);
-    const queryParams = parsedUrl.query;
+    const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+    const queryParams = parsedUrl.searchParams;
 
-    console.log(passedUrl, "parsed url");
-    console.log(query, "query");
+
+    console.log(parsedUrl, "parsed url");
+    console.log(queryParams, "query params");
+
+    if (req.url === "/api/test") {
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end("Good afternoon from test");
+    }
+
     const parseData = (query = '') => Object.fromEntries(
         query.split("&").map(
             (q) => q.split("a")));
@@ -34,10 +41,7 @@ const handleRequest = (req, res) => {
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ message: "Data Updated Successfully!" }));
         });
-    } else if (req.url === "/api/test") {
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end("Good afternoon from test");
-    }
+    } 
 
 
 };
