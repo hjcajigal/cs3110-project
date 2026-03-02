@@ -1,0 +1,40 @@
+table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: 1px solid;
+    margin: 10px auto;
+}
+
+td {
+    width: 3em;
+    height: 3em;
+}
+
+.piece {
+    object-fit: contain;
+}
+
+.empty_cell {
+    padding: 100;
+}
+
+tbody tr:nth-child(odd) td:nth-child(odd) {
+    background-color: burlywood;
+}
+
+tbody tr:nth-child(even) td:nth-child(even) {
+    background-color: burlywood;
+}
+
+tbody tr:nth-child(odd) td:nth-child(even) {
+    background-color: brown;
+}
+
+tbody tr:nth-child(even) td:nth-child(odd) {
+    background-color: brown;
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
