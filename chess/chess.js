@@ -1,22 +1,12 @@
-const Pieces = Object.freeze({
-    EMPTY: Symbol("empty"),
-    PAWN: Symbol("pawn"),
-    ROOK: Symbol("rook"),
-    KNIGHT: Symbol("knight"),
-    BISHOP: Symbol("bishop"),
-    QUEEN: Symbol("queen"),
-    KING: Symbol("king"),
-});
-
 const basicBoard = [
-    [Pieces.ROOK, Pieces.KNIGHT, Pieces.BISHOP, Pieces.QUEEN, Pieces.KING, Pieces.BISHOP, Pieces.KNIGHT, Pieces.ROOK],
-    [Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN],
-    [Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY],
-    [Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY],
-    [Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY],
-    [Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY, Pieces.EMPTY],
-    [Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN, Pieces.PAWN],
-    [Pieces.ROOK, Pieces.KNIGHT, Pieces.BISHOP, Pieces.QUEEN, Pieces.KING, Pieces.BISHOP, Pieces.KNIGHT, Pieces.ROOK],
+    [{type: 'rook', color: 'black'}, {type: 'knight', color: 'black'}, {type: 'bishop', color: 'black'}, {type: 'queen', color: 'black'}, {type: 'king', color: 'black'}, {type: 'bishop', color: 'black'}, {type: 'knight', color: 'black'}, {type: 'rook', color: 'black'}],
+    [{type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [{type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}],
+    [{type: 'rook', color: 'white'}, {type: 'knight', color: 'white'}, {type: 'bishop', color: 'white'}, {type: 'queen', color: 'white'}, {type: 'king', color: 'white'}, {type: 'bishop', color: 'white'}, {type: 'knight', color: 'white'}, {type: 'rook', color: 'white'}],
 ];
 
 generateBoard(8, 8);
@@ -29,37 +19,53 @@ function generateBoard(x, y) {
 
         for (let j = 0; j < 8; j++) {
             let cell = row.insertCell(-1);
+            cell.id = j + "-" + i
             addPiece(cell, basicBoard[i][j]);
         }
     } 
 }
 
 function addPiece(cell, piece) {
-    if (piece !== Pieces.EMPTY) {
+    if (piece !== null) {
         let imgPiece = document.createElement("img");   
-        imgPiece.src = "/img/chess/" + piece.description + ".svg";
+        imgPiece.src = `/img/chess/${piece.color}_${piece.type}.svg`
+        imgPiece.addEventListener("click", cellPos);
         cell.appendChild(imgPiece);
     } else {
         cell.classList.add("empty_cell");
     }
 }
 
-
+function cellPos(e) {
+    let cell = e.currentTarget.parentNode;
+    console.log(`X: ${cell.cellIndex} Y: ${cell.parentNode.rowIndex}`);
+}
 
 class Board {
     width;
     height;
     boardArray;
 
-
-    constructor() {
+    constructor(width, height) {
         this.width = w;
         this.height = h;
         this.boardArray = basicBoard;
+    }
+
+    getPiece(x, y) {
+        return this.boardArray[y][x];
     }
 }
 
 class Piece {
     type;
-    construct;
+    color;
+
+    hasMoved = false;
+
+    constructor(type, color) {
+        this.type = type;
+        this.color = color;
+    }
+
 }
