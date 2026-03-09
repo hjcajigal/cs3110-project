@@ -16,12 +16,18 @@
     </header>
 
     <section>
-        <form method="get" action="/api">
-            <label>GET Request</label>
-            <div><input type="submit"></div>
+        <form action="/api" method="post" id="post_form">
+            <label>Character Name Input</label>
+            <div><input type="text" name="name_input" id="name_input" required></div>
+            <div><button id="add_char_btn">Add</div>
         </form>
     </section>
 
+    <section>
+        <ul id="list"></ul>
+    </section>
+
+    <script src="request_api.js"></script>
 </body>
 
 </html>
