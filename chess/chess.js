@@ -80,20 +80,20 @@ function setPiece(cell, piece) {
         let imgPiece = document.createElement("img");   
         imgPiece.src = `/img/chess/${piece.color}_${piece.type}.svg`
         imgPiece.addEventListener("click", (e) => {
+            clearMovableSpaces();
+
             var pos = getCellPos(e.currentTarget.parentNode);
 
             let piece = board.arr[pos.y][pos.x];
 
             colorMoveSpaces(getMoveSpaces(piece, pos.x, pos.y));
             
-            var movableSpaces = document.getElementsByClassName('movable-space');
+            let movableSpaces = document.getElementsByClassName('movable-space');
             for (let space of movableSpaces) {
                 space.addEventListener('click', (e) => {
                     board.movePiece(pos, getCellPos(e.currentTarget));
                     
-                    for (let space of movableSpaces) {
-                        space.classList.remove('movable-space');
-                    }
+                    clearMovableSpaces();
                 });   
             }
         });
@@ -107,23 +107,30 @@ function getMoveSpaces(piece, x, y) {
     let spaces = [];
     switch (piece.type) {
         case 'pawn':
-            let colorMod = piece.color === 'white' ? 1 : -1; //
+            let colorMod = piece.color === 'white' ? -1 : 1; //
+
+            let nextRow = y + 1 * colorMod;
+
+            if ((nextRow) in board.arr) {
 
             if (!piece.hasMoved) {
                 spaces.push({x: x, y: y + 2 * colorMod});
             }
             
-            if (board.arr[x][y + 1 * colorMod] === null) {
-                spaces.push({x: x, y: y + colorMod});
+                if (board.arr[nextRow][x] === null) {
+                    spaces.push({x: x, y: nextRow});
             }
 
-            if ((y + 1 * colorMod) in board.arr) {
-                if ((x + 1 in board.arr) && (board.arr[y + 1 * colorMod][x + 1] !== null)) {
-                    spaces.push({x: x + 1, y: y + 1 * colorMod});
+                if ((x + 1 < board.width) && (board.arr[nextRow][x + 1] !== null)) {
+                    if (board.arr[nextRow][x - 1].color != piece.color) {
+                        spaces.push({x: x + 1, y: nextRow});
+                    }
                 }
 
-                if ((x - 1 in board.arr) && (board.arr[y + 1 * colorMod][x - 1] !== null)) {
-                    spaces.push({x: x - 1, y: y + 1 * colorMod});
+                if ((x - 1 > 0) && ((board.arr[nextRow][x - 1] !== null))) { 
+                    if (board.arr[nextRow][x - 1].color != piece.color) {
+                        spaces.push({x: x - 1, y: nextRow});
+                    }
                 }
             }
             break;
@@ -148,4 +155,12 @@ function getCellPos(cell) {
 
 function makePos(x, y) {
     return {x: x, y: y};
+}
+
+function clearMovableSpaces() {
+    let movableSpaces = document.getElementsByClassName('movable-space');
+
+    for (let i = movableSpaces.length - 1; i >= 0; i--) {
+        movableSpaces[i].classList.remove('movable-space');
+    }
 }
