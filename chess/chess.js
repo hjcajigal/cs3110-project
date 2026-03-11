@@ -1,59 +1,25 @@
-const basicBoard = [
-    [{type: 'rook', color: 'black'}, {type: 'knight', color: 'black'}, {type: 'bishop', color: 'black'}, {type: 'queen', color: 'black'}, {type: 'king', color: 'black'}, {type: 'bishop', color: 'black'}, {type: 'knight', color: 'black'}, {type: 'rook', color: 'black'}],
-    [{type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}, {type: 'pawn', color: 'black'}],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [{type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}, {type: 'pawn', color: 'white'}],
-    [{type: 'rook', color: 'white'}, {type: 'knight', color: 'white'}, {type: 'bishop', color: 'white'}, {type: 'queen', color: 'white'}, {type: 'king', color: 'white'}, {type: 'bishop', color: 'white'}, {type: 'knight', color: 'white'}, {type: 'rook', color: 'white'}],
-];
-
-generateBoard(8, 8);
-
-function generateBoard(x, y) {
-    let chessBoard = document.getElementById("board_body");
-
-    for (let i = 0; i < 8; i++) {
-        let row = chessBoard.insertRow(-1);
-
-        for (let j = 0; j < 8; j++) {
-            let cell = row.insertCell(-1);
-            cell.id = j + "-" + i
-            addPiece(cell, basicBoard[i][j]);
-        }
-    } 
-}
-
-function addPiece(cell, piece) {
-    if (piece !== null) {
-        let imgPiece = document.createElement("img");   
-        imgPiece.src = `/img/chess/${piece.color}_${piece.type}.svg`
-        imgPiece.addEventListener("click", cellPos);
-        cell.appendChild(imgPiece);
-    } else {
-        cell.classList.add("empty_cell");
-    }
-}
-
-function cellPos(e) {
-    let cell = e.currentTarget.parentNode;
-    console.log(`X: ${cell.cellIndex} Y: ${cell.parentNode.rowIndex}`);
-}
-
 class Board {
     width;
     height;
-    boardArray;
+    arr;
 
-    constructor(width, height) {
-        this.width = w;
-        this.height = h;
-        this.boardArray = basicBoard;
+    constructor(width, height, arr) {
+        this.width = width;
+        this.height = height;
+        this.arr = arr;
     }
 
-    getPiece(x, y) {
-        return this.boardArray[y][x];
+    /**
+     * Moves a piece from one position to another.
+     * @param {*} oldPos The current position of the piece to move.
+     * @param {*} newPos The position to move the piece to.
+     */
+    movePiece(oldPos, newPos) {
+        let piece = this.arr[oldPos.y][oldPos.x];
+        this.arr[oldPos.y][oldPos.x] = null;
+        this.arr[newPos.y][newPos.y] = piece;
+
+        updateBoard(oldPos, newPos);
     }
 }
 
@@ -63,9 +29,123 @@ class Piece {
 
     hasMoved = false;
 
-    constructor(type, color) {
+    constructor(color, type) {
         this.type = type;
         this.color = color;
     }
+}
 
+const chessBoard = document.getElementById('board_body');
+
+var movingPiece = null;
+
+const BASIC_BOARD = new Board(8, 8,[
+    [new Piece('black', 'rook'), new Piece('black', 'knight'), new Piece('black', 'bishop'), new Piece('black', 'queen'), new Piece('black', 'king'), new Piece('black', 'bishop'), new Piece('black', 'knight'), new Piece('black', 'rook')],
+    [new Piece('black', 'pawn'), new Piece('black', 'pawn'), new Piece('black', 'pawn'), new Piece('black', 'pawn'), new Piece('black', 'pawn'), new Piece('black', 'pawn'), new Piece('black', 'pawn'), new Piece('black', 'pawn')],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [new Piece('white', 'pawn'), new Piece('white', 'pawn'), new Piece('white', 'pawn'), new Piece('white', 'pawn'), new Piece('white', 'pawn'), new Piece('white', 'pawn'), new Piece('white', 'pawn'), new Piece('white', 'pawn')],
+    [new Piece('white', 'rook'), new Piece('white', 'knight'), new Piece('white', 'bishop'), new Piece('white', 'queen'), new Piece('white', 'king'), new Piece('white', 'bishop'), new Piece('white', 'knight'), new Piece('white', 'rook')],
+]);
+
+const board = BASIC_BOARD
+generateBoard(board);
+
+let test = document.getElementById('5-6').firstChild;
+
+function generateBoard(board) {
+    for (let i = 0; i < board.height; i++) {
+        let row = chessBoard.insertRow(-1);
+
+        for (let j = 0; j < board.width; j++) {
+            let cell = row.insertCell(-1);
+            cell.id = `${j}-${i}`;
+            setPiece(cell, board.arr[i][j]);
+        }
+    } 
+}
+
+function updateBoard(oldSpace, newSpace) {
+    const oldCell = document.getElementById(`${oldSpace.x}-${oldSpace.y}`);
+    const newCell = document.getElementById(`${newSpace.x}-${newSpace.y}`);
+    
+    newCell.replaceChildren(oldCell.firstChild);
+    oldCell.replaceChildren();
+}
+
+function setPiece(cell, piece) {
+    if (piece !== null) {
+        let imgPiece = document.createElement("img");   
+        imgPiece.src = `/img/chess/${piece.color}_${piece.type}.svg`
+        imgPiece.addEventListener("click", (e) => {
+            var pos = getCellPos(e.currentTarget.parentNode);
+
+            let piece = board.arr[pos.y][pos.x];
+
+            colorMoveSpaces(getMoveSpaces(piece, pos.x, pos.y));
+            
+            var movableSpaces = document.getElementsByClassName('movable-space');
+            for (let space of movableSpaces) {
+                space.addEventListener('click', (e) => {
+                    board.movePiece(pos, getCellPos(e.currentTarget));
+                    
+                    for (let space of movableSpaces) {
+                        space.classList.remove('movable-space');
+                    }
+                });   
+            }
+        });
+        cell.appendChild(imgPiece);
+    } else {
+        cell.classList.add("empty-cell");
+    } 
+}
+
+function getMoveSpaces(piece, x, y) {
+    let spaces = [];
+    switch (piece.type) {
+        case 'pawn':
+            let colorMod = piece.color === 'white' ? 1 : -1; //
+
+            if (!piece.hasMoved) {
+                spaces.push({x: x, y: y + 2 * colorMod});
+            }
+            
+            if (board.arr[x][y + 1 * colorMod] === null) {
+                spaces.push({x: x, y: y + colorMod});
+            }
+
+            if ((y + 1 * colorMod) in board.arr) {
+                if ((x + 1 in board.arr) && (board.arr[y + 1 * colorMod][x + 1] !== null)) {
+                    spaces.push({x: x + 1, y: y + 1 * colorMod});
+                }
+
+                if ((x - 1 in board.arr) && (board.arr[y + 1 * colorMod][x - 1] !== null)) {
+                    spaces.push({x: x - 1, y: y + 1 * colorMod});
+                }
+            }
+            break;
+    }
+
+    return spaces;
+}
+
+function colorMoveSpaces(spaces) {
+    for (let space of spaces) {
+        let cell = document.getElementById(`${space.x}-${space.y}`);
+        cell.classList.add('movable-space');
+    }
+}
+
+function getCellPos(cell) {
+    let pos = {x: cell.cellIndex, y: cell.parentNode.rowIndex};
+    console.log(`X: ${pos.x} Y: ${pos.y}`);
+
+    return pos;
+}
+
+function makePos(x, y) {
+    return {x: x, y: y};
 }

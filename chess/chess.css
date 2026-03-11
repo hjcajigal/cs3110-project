@@ -14,7 +14,7 @@ td {
     object-fit: contain;
 }
 
-.empty_cell {
+.empty-cell {
     padding: 100;
 }
 
@@ -37,4 +37,8 @@ tbody tr:nth-child(even) td:nth-child(odd) {
 img {
     max-width: 100%;
     max-height: 100%;
+}
+
+.movable-space {
+    background-color: yellow !important;
 }
