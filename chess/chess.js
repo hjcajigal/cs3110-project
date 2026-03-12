@@ -17,7 +17,9 @@ class Board {
     movePiece(oldPos, newPos) {
         let piece = this.arr[oldPos.y][oldPos.x];
         this.arr[oldPos.y][oldPos.x] = null;
-        this.arr[newPos.y][newPos.y] = piece;
+        this.arr[newPos.y][newPos.x] = piece;
+
+        piece.hasMoved = true;
 
         updateBoard(oldPos, newPos);
     }
@@ -38,6 +40,8 @@ class Piece {
 const chessBoard = document.getElementById('board_body');
 
 var movingPiece = null;
+var movingPos = {x: -1, y: -1};
+var currentPlayer = 'white';
 
 const BASIC_BOARD = new Board(8, 8,[
     [new Piece('black', 'rook'), new Piece('black', 'knight'), new Piece('black', 'bishop'), new Piece('black', 'queen'), new Piece('black', 'king'), new Piece('black', 'bishop'), new Piece('black', 'knight'), new Piece('black', 'rook')],
@@ -80,21 +84,28 @@ function setPiece(cell, piece) {
         let imgPiece = document.createElement("img");   
         imgPiece.src = `/img/chess/${piece.color}_${piece.type}.svg`
         imgPiece.addEventListener("click", (e) => {
-            clearMovableSpaces();
-
-            var pos = getCellPos(e.currentTarget.parentNode);
+            let pos = getCellPos(e.currentTarget.parentNode);
 
             let piece = board.arr[pos.y][pos.x];
 
-            colorMoveSpaces(getMoveSpaces(piece, pos.x, pos.y));
-            
-            let movableSpaces = document.getElementsByClassName('movable-space');
-            for (let space of movableSpaces) {
-                space.addEventListener('click', (e) => {
-                    board.movePiece(pos, getCellPos(e.currentTarget));
+            if (piece.color == currentPlayer) {
+                clearMovableSpaces();
+
+
+                if (movingPiece !== piece) {
+                    movingPiece = piece;
+                    movingPos = pos;
+
+                    colorMoveSpaces(getMoveSpaces(piece, pos.x, pos.y));
                     
-                    clearMovableSpaces();
-                });   
+                    let movableSpaces = document.getElementsByClassName('movable-space');
+                    for (let space of movableSpaces) {
+                        space.addEventListener('click', movableSpaceHandler);
+                    }
+                } else {
+                    movingPiece = null;
+                    movingPos = {x: -1, y: -1};
+                }
             }
         });
         cell.appendChild(imgPiece);
@@ -113,16 +124,16 @@ function getMoveSpaces(piece, x, y) {
 
             if ((nextRow) in board.arr) {
 
-            if (!piece.hasMoved) {
-                spaces.push({x: x, y: y + 2 * colorMod});
-            }
+                if (!piece.hasMoved) {
+                    spaces.push({x: x, y: y + 2 * colorMod});
+                }
             
                 if (board.arr[nextRow][x] === null) {
                     spaces.push({x: x, y: nextRow});
-            }
+                }
 
                 if ((x + 1 < board.width) && (board.arr[nextRow][x + 1] !== null)) {
-                    if (board.arr[nextRow][x - 1].color != piece.color) {
+                    if (board.arr[nextRow][x + 1].color != piece.color) {
                         spaces.push({x: x + 1, y: nextRow});
                     }
                 }
@@ -134,6 +145,10 @@ function getMoveSpaces(piece, x, y) {
                 }
             }
             break;
+        case 'rook':
+            spaces = spaces.concat(getStraightMovableSpaces(piece, x, y));
+            
+            break;
     }
 
     return spaces;
@@ -141,6 +156,7 @@ function getMoveSpaces(piece, x, y) {
 
 function colorMoveSpaces(spaces) {
     for (let space of spaces) {
+        let cellId = space.x + '-' + space.y;
         let cell = document.getElementById(`${space.x}-${space.y}`);
         cell.classList.add('movable-space');
     }
@@ -148,19 +164,93 @@ function colorMoveSpaces(spaces) {
 
 function getCellPos(cell) {
     let pos = {x: cell.cellIndex, y: cell.parentNode.rowIndex};
-    console.log(`X: ${pos.x} Y: ${pos.y}`);
+    // console.log(`X: ${pos.x} Y: ${pos.y}`);
 
     return pos;
-}
-
-function makePos(x, y) {
-    return {x: x, y: y};
 }
 
 function clearMovableSpaces() {
     let movableSpaces = document.getElementsByClassName('movable-space');
 
     for (let i = movableSpaces.length - 1; i >= 0; i--) {
+        movableSpaces[i].removeEventListener('click', movableSpaceHandler)
         movableSpaces[i].classList.remove('movable-space');
     }
+}
+
+function movableSpaceHandler(e) {
+    board.movePiece(movingPos, getCellPos(e.currentTarget));
+                        
+    movingPiece = null;
+    movingPos = {x: -1, y: -1}
+    
+    if (currentPlayer == 'white') {
+        currentPlayer = 'black';
+    } else {
+        currentPlayer = 'white'
+    }
+
+    clearMovableSpaces();
+} 
+
+function getStraightMovableSpaces(piece, x, y) {
+    let spaces = [];
+
+    let row = y + 1;
+    while (row < board.height) {
+        let currentSpace = board.arr[row][x];
+        if (currentSpace === null) {
+            spaces.push({x: x, y: row});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: x, y: row});
+            }
+            break;
+        }
+        row++;
+    }
+
+    row = y - 1;
+    while (row >= 0) {
+        let currentSpace = board.arr[row][x];
+        if (currentSpace === null) {
+            spaces.push({x: x, y: row});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: x, y: row});
+            }
+            break;
+        }
+        row--;
+    }
+
+    let col = x + 1;
+    while (col < board.width) {
+        let currentSpace = board.arr[y][col];
+        if (currentSpace === null) {
+            spaces.push({x: col, y: y});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: col, y: y});
+            }
+            break;
+        }
+        col++;
+    }
+
+    col = x - 1;
+    while (col >= 0) {
+        let currentSpace = board.arr[y][col];
+        if (currentSpace === null) {
+            spaces.push({x: col, y: y});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: col, y: y});
+            }
+            break;
+        }
+        col--;
+    }
+
+    return spaces;
 }
