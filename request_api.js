@@ -3,6 +3,8 @@ const userHtml = document.getElementById("user_list");
 const nameInput = document.getElementById("name_input");
 const typeInput = document.getElementById("user_type");
 
+
+
 console.log("Establishing SSE connection to server");
 const serverEvents = new EventSource("/api/sse");
 

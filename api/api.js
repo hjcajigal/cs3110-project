@@ -1,23 +1,92 @@
+// Dependencys
+console.log("Server startup");
+console.log("Node version: ", process.version);
+
 const http = require("http");
 const url = require("url");
 const querystring = require('querystring'); 
 const { arrayBuffer, json } = require("stream/consumers");
 const crypto = require("crypto");
 const fs = require("fs");
+const { DatabaseSync } = require('node:sqlite');
+
+console.log("Depedndencies loaded");
 
 let users;
 
-fs.readFile("/var/www/users.json", function(err, data) { 
+const charactersDb = new DatabaseSync('/var/www/db/characters.db');
+const usersDb = new DatabaseSync('/var/www/db/users.db');
+
+// charactersDb.exec('PRAGMA auto_vacuum = FULL');
+// usersDb.exec('PRAGMA auto_vacuum = FULL');
+
+// charactersDb.exec('CREATE TABLE IF NOT EXISTS characters (name TEXT); INSERT INTO characters ');
+
+const getCharsAllStatement = charactersDb.prepare('SELECT name FROM characters');
+const getCharIndexStatement = charactersDb.prepare('SELECT name FROM characters WHERE ROWID = ?');
+const getCharNameStatement = charactersDb.prepare('SELECT name FROM characters WHERE name = ?');
+const insertCharStatement = charactersDb.prepare('INSERT INTO characters VALUES (?)');
+const updateCharStatement = charactersDb.prepare('UPDATE characters SET name = ?2 WHERE ROWID = ?1');
+const deleteCharStatement = charactersDb.prepare('DELETE FROM characters WHERE ROWID = ?');
+const vacuumCharsStatement = charactersDb.prepare('VACUUM');
+
+const getUsersAllStatement = usersDb.prepare('SELECT username, type FROM users');
+const getUserNameStatement = usersDb.prepare('SELECT * FROM users WHERE username = ?');
+const getUsersDbLength = usersDb.prepare('SELECT COUNT(*) FROM users');
+const insertUserStatement = usersDb.prepare('INSERT INTO users VALUES (?, ?, ?)');
+const updateUserStatement = usersDb.prepare('UPDATE users SET type = ?2 WHERE ROWID = ?1');
+const deleteUserStatement = usersDb.prepare('DELETE FROM users WHERE ROWID = ?');
+const vacuumUsersStatement = usersDb.prepare('VACUUM');
+
+
+function charArrayHelper(array) {
+    let result = []
+    for (let row of array) {
+        result.push(row.name);
+    }
+    return result;
+}
+
+function getCharIndex(index) {
+    let result = getCharIndexStatement.run(index);
+    return result;
+}
+
+function getChars() {
+    let array = getCharsAllStatement.all();
+    return charArrayHelper(array);
+}
+
+function vaccuumeChars() {
+    charactersDb.exec('VACCUUM ')
+}
+
+function getUsers() {
+    return getUsersAllStatement.all();
+}
+
+function usersLength() {
+    return getUsersDbLength.get()['COUNT(*)'];
+}
+
+
+
+console.log(getChars());
+console.log(getCharIndex(1));
+console.log(usersLength());
+
+
+// fs.readFile("/var/www/users.json", function(err, data) { 
     
-    // Check for errors 
-    if (err) throw err; 
+//     // Check for errors 
+//     if (err) throw err; 
 
-    // Converting to JSON 
-    users = JSON.parse(data); 
-});
+//     // Converting to JSON 
+//     users = JSON.parse(data); 
+// });
 
 
-console.log(users);
+console.log(getUsers());
 
 var characters = ["Larry", "Harry", "Mike"];
 var sseClients = [];
@@ -44,24 +113,24 @@ function parseBasicAuth(authHeader) {
     return { username, password };
 }
 
-function updateJson() {
-    console.log("update json");
-    fs.writeFile(
-    "/var/www/users.json",
-    JSON.stringify(users),
-    err => {
-        // Checking for errors 
-        if (err) throw err;
+// function updateJson() {
+//     console.log("update json");
+//     fs.writeFile(
+//     "/var/www/users.json",
+//     JSON.stringify(users),
+//     err => {
+//         // Checking for errors 
+//         if (err) throw err;
 
-        // Success 
-        console.log("Done writing");
-    });
-    console.log(JSON.stringify(users));
-}
+//         // Success 
+//         console.log("Done writing");
+//     });
+//     console.log(JSON.stringify(users));
+// }
 
 
 const notifySSE = () => {
-    const data = JSON.stringify({ characters, users });
+    const data = JSON.stringify({ characters: getChars(), users: getUsers() });
     sseClients.forEach((c) => {
         console.log("Sending data to client " + c.id);
         c.res.write(`data: ${data}\n\n`);
@@ -89,17 +158,27 @@ const handleRequest = (req, res) => {
         console.log("Username:", username);
         console.log("Password:", password);
         
-        for (let user of users) {
-            if (user.username === username) {
-                let hashedPass = sha256(password);
-                console.log(hashedPass);
-                if (hashedPass === user.password) {
-                    authType = user.type;
-                }
+        let user = getUserNameStatement.get(username);
 
-                break;
+        if (user) {
+            let hashedPass = sha256(password);
+            console.log(hashedPass);
+            if (hashedPass === user.password) {
+                authType = user.type;
             }
-        } 
+        }
+
+        // for (let user of users) {
+        //     if (user.username === username) {
+        //         let hashedPass = sha256(password);
+        //         console.log(hashedPass);
+        //         if (hashedPass === user.password) {
+        //             authType = user.type;
+        //         }
+
+        //         break;
+        //     }
+        // } 
 
         console.log("Authorization type:", authType);
     }
@@ -109,13 +188,13 @@ const handleRequest = (req, res) => {
     if (req.url === "/api/test") {
         console.log(characters)
         res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end(characters.toString());
+        res.end(getChars().toString());
     } else if (req.method === "GET" && req.url === "/api") {
         console.log("Processing GET request");
         console.log(queryParams);
 
         if (queryParams.entries().has("index")) {
-            let character = characters[value];
+            let character = getCharIndex(value);
 
             if (character) {
                 res.writeHead(200, { "Content-Type": "application/json"});
@@ -126,7 +205,7 @@ const handleRequest = (req, res) => {
             }
         } else {
             res.writeHead(200, {"Content-Type": "application/json"});
-            res.end(JSON.stringify(characters));
+            res.end(JSON.stringify(getChars()));
         }
 
     } else if (req.method === "GET" && req.url === "/api/sse") {
@@ -138,8 +217,11 @@ const handleRequest = (req, res) => {
             'Cache-Control': 'no-cache'
         });
 
+        console.log
+
         console.log("Sending data to new SSE client");
-        res.write(`data: ${JSON.stringify({ characters, users })}\n\n`);
+        console.log(getChars());
+        res.write(`data: ${JSON.stringify({ characters: getChars(), users: getUsers() })}\n\n`);
 
         const clientId = Date.now();
         
@@ -188,15 +270,16 @@ const handleRequest = (req, res) => {
                     let data = querystring.parse(body)
 
                     console.log("Received POST data", data);
-
-                    users.push({ username: data.admin_name, password: sha256(data.admin_pass), type: data.user_type});
+                    
+                    insertUserStatement.run(data.admin_name, sha256(data.admin_pass), data.user_type);
+                    //users.push({ username: data.admin_name, password: sha256(data.admin_pass), type: data.user_type});
                     
                     res.writeHead(201, { "Content-Type": "application/json" });
                     res.end(JSON.stringify({ message: "Character Added!", received: body }));
 
-                    console.log(users);
+                    console.log(getUsers());
                     notifySSE();
-                    updateJson();
+                    //updateJson();
                 });
             } else if (req.method === "PUT") {
                 let body = "";
@@ -209,20 +292,20 @@ const handleRequest = (req, res) => {
                     if (!data.index || !data.user_type) {
                         res.writeHead(400, { "Content-Type": "application/json"});
                         res.end(JSON.stringify({ message: "One or more required parameters not found"}))
-                    } else if (data.index >= users.length || data.index < 0) {
+                    } else if (data.index >= usersLength() || data.index < 0) {
                         res.writeHead(400, { "Content-Type": "application/json"});
                         res.end(JSON.stringify({ message: "Invalid index"}));
                     } else if (!data.user_type) {
                         res.writeHead(400, { "Content-Type": "application/json" });
                         res.end(JSON.stringify({ message: "No character name given"}));
                     } else {
-                        users[data.index].type = data.user_type;
-
+                        updateUserStatement.run(data.index + 1, data.user_type);
+                        //users[data.index].type = data.user_type;
 
                         res.writeHead(200, { "Content-Type": "application/json" });
                         res.end(JSON.stringify({ message: "Character Updated!", received: body}));
                         notifySSE();
-                        updateJson();
+                        //updateJson();
                     }
                 });
             } else if (req.method === "DELETE") {
@@ -236,16 +319,17 @@ const handleRequest = (req, res) => {
                     if (!data.index) {
                         res.writeHead(400, { "Content-Type": "application/json"});
                         res.end(JSON.stringify({ message: "One or more required parameters not found"}))
-                    } else if (data.index >= users.length || data.index < 0) {
+                    } else if (data.index >= usersLength() || data.index < 0) {
                         res.writeHead(400, { "Content-Type": "application/json"});
                         res.end(JSON.stringify({ message: "Invalid index"}));
                     } else {
-                        users.splice(data.index, 1);
+                        deleteUserStatement.run(Number(data.index) + 1);
+                        vacuumUsersStatement.run();
 
                         res.writeHead(200, { "Content-Type": "application/json" });
                         res.end(JSON.stringify({ message: "User deleted!", received: body}));
                         notifySSE();
-                        updateJson();
+                        //updateJson();
                     }
                 });
             }
@@ -275,7 +359,7 @@ const handleRequest = (req, res) => {
 
             console.log("Received POST data", data.name_input);
 
-            characters.push(data.name_input);
+            insertCharStatement.run(data.name_input);
             
             res.writeHead(201, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ message: "Character Added!", received: data.name_input }));
@@ -301,14 +385,14 @@ const handleRequest = (req, res) => {
             if (!data.index || !data.name_input) {
                 res.writeHead(400, { "Content-Type": "application/json"});
                 res.end(JSON.stringify({ message: "One or more required parameters not found"}))
-            } else if (data.index >= characters.length || data.index < 0) {
+            } else if (data.index >= getChars.length || data.index < 0) {
                 res.writeHead(400, { "Content-Type": "application/json"});
                 res.end(JSON.stringify({ message: "Invalid index"}));
             } else if (!data.name_input) {
                 res.writeHead(400, { "Content-Type": "application/json" });
                 res.end(JSON.stringify({ message: "No character name given"}));
             } else {
-                characters[data.index] = data.name_input;
+                updateCharStatement.run(data.index + 1, data.name_input);
 
 
                 res.writeHead(200, { "Content-Type": "application/json" });
@@ -330,13 +414,14 @@ const handleRequest = (req, res) => {
         console.log(queryParams);
 
         for (const [param, value] of queryParams.entries()) {
-            console.log(param)
             if (param === "index") {
-                let character = characters[value];
+                let character = getCharIndex(value);
 
                 if (character) {
-                    characters.splice(value, 1);
-                
+                    console.log(value + 1);
+                    console.log(deleteCharStatement.run(Number(value) + 1));
+                    console.log(vacuumCharsStatement.run());
+
                     res.writeHead(200, { "Content-Type": "application/json"});
                     res.end(JSON.stringify(character));
                     notifySSE();

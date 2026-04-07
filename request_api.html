@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
@@ -25,7 +25,7 @@
         <h2>Login</h2>
         <form action="/api/auth" method="post" id="login_form">
             <div><label for="username">Username</label></div>
-            <div><input type="text" name="username" id="password" placeholder="Enter username" required></div>
+            <div><input type="text" name="username" id="username" placeholder="Enter username" required></div>
             <div><label for="password">Password</label></div>
             <div><input type="password" name="password" id="password" placeholder="Enter password" required></div>
             <div><button type="submit" >Log In</button></div>
@@ -34,17 +34,17 @@
 
 
 
-    <section id="list_section">
+    <div id="list_section">
         <form action="/api" method="post" id="post_form">
             <label>Character Name Input</label>
             <div><input type="text" name="name_input" id="name_input" required></div>
-            <div><button id="add_char_btn">Add</div>
+            <div><button id="add_char_btn">Add</button></div>
         </form>
 
         <ul id="list"></ul>
-    </section>
+    </div>
 
-    <section id="admin_panel">
+    <div id="admin_panel">
         <form action="/api/admin" method="post" id="admin_form">
             <label>Add New User</label>
             <div><input type="text" name="admin_name" id="admin_name" required></div>
@@ -59,7 +59,7 @@
             <div><button type="submit">Add User</button></div>
         </form>
         <ul id="user_list"></ul>
-    </section>
+    </div>
 
     <script src="request_api.js"></script>
 </body>
