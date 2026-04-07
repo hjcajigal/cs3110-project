@@ -1,7 +1,7 @@
 table {
     table-layout: fixed;
     border-collapse: collapse;
-    border: 1px solid;
+    border: 5px solid;
     margin: 10px auto;
 }
 
@@ -9,6 +9,7 @@ td {
     width: 3.5em;
     height: 3.5em;
     text-align: center;
+    border: 1px solid;
 }
 
 .piece {

@@ -1,0 +1,11 @@
+.hidden {
+    display: none;
+}
+
+#admin_panel {
+    float: right;
+}
+
+#list_section {
+    float: left;
+}

@@ -31,6 +31,8 @@ class Piece {
 
     hasMoved = false;
 
+    pawnTwoSpace = false;
+
     constructor(color, type) {
         this.type = type;
         this.color = color;
@@ -54,7 +56,7 @@ const BASIC_BOARD = new Board(8, 8,[
     [new Piece('white', 'rook'), new Piece('white', 'knight'), new Piece('white', 'bishop'), new Piece('white', 'queen'), new Piece('white', 'king'), new Piece('white', 'bishop'), new Piece('white', 'knight'), new Piece('white', 'rook')],
 ]);
 
-const board = BASIC_BOARD
+const board = BASIC_BOARD;
 generateBoard(board);
 
 let test = document.getElementById('5-6').firstChild;
@@ -96,12 +98,8 @@ function setPiece(cell, piece) {
                     movingPiece = piece;
                     movingPos = pos;
 
-                    colorMoveSpaces(getMoveSpaces(piece, pos.x, pos.y));
-                    
-                    let movableSpaces = document.getElementsByClassName('movable-space');
-                    for (let space of movableSpaces) {
-                        space.addEventListener('click', movableSpaceHandler);
-                    }
+                    colorMoveSpaces(getMovableSpaces(piece, pos.x, pos.y));
+    
                 } else {
                     movingPiece = null;
                     movingPos = {x: -1, y: -1};
@@ -114,51 +112,43 @@ function setPiece(cell, piece) {
     } 
 }
 
-function getMoveSpaces(piece, x, y) {
+function getMovableSpaces(piece, x, y) {
     let spaces = [];
     switch (piece.type) {
         case 'pawn':
-            let colorMod = piece.color === 'white' ? -1 : 1; //
-
-            let nextRow = y + 1 * colorMod;
-
-            if ((nextRow) in board.arr) {
-
-                if (!piece.hasMoved) {
-                    spaces.push({x: x, y: y + 2 * colorMod});
-                }
-            
-                if (board.arr[nextRow][x] === null) {
-                    spaces.push({x: x, y: nextRow});
-                }
-
-                if ((x + 1 < board.width) && (board.arr[nextRow][x + 1] !== null)) {
-                    if (board.arr[nextRow][x + 1].color != piece.color) {
-                        spaces.push({x: x + 1, y: nextRow});
-                    }
-                }
-
-                if ((x - 1 > 0) && ((board.arr[nextRow][x - 1] !== null))) { 
-                    if (board.arr[nextRow][x - 1].color != piece.color) {
-                        spaces.push({x: x - 1, y: nextRow});
-                    }
-                }
-            }
+            spaces = spaces.concat(getPawnSpaces(piece, x, y)); 
             break;
         case 'rook':
-            spaces = spaces.concat(getStraightMovableSpaces(piece, x, y));
+            spaces = spaces.concat(getStraightSpaces(piece, x, y));
             
+            break;
+        case 'bishop':
+            spaces = spaces.concat(getDiagonalSpaces(piece, x, y));
+
+            break;
+        case 'knight':
+            spaces = spaces.concat(getKnightSpaces(piece, x, y));
+
+            break;
+        case 'queen':
+            spaces = spaces.concat(getStraightSpaces(piece, x, y));
+            spaces = spaces.concat(getDiagonalSpaces(piece, x, y));
+
+            break;
+        case 'king':
+            spaces = spaces.concat(getKingSpaces(piece, x, y));
+
             break;
     }
 
     return spaces;
 }
 
-function colorMoveSpaces(spaces) {
+async function colorMoveSpaces(spaces) {
     for (let space of spaces) {
-        let cellId = space.x + '-' + space.y;
         let cell = document.getElementById(`${space.x}-${space.y}`);
         cell.classList.add('movable-space');
+        cell.addEventListener('click', movableSpaceHandler);
     }
 }
 
@@ -184,16 +174,63 @@ function movableSpaceHandler(e) {
     movingPiece = null;
     movingPos = {x: -1, y: -1}
     
-    if (currentPlayer == 'white') {
-        currentPlayer = 'black';
-    } else {
-        currentPlayer = 'white'
-    }
+    // if (currentPlayer == 'white') {
+    //     currentPlayer = 'black';
+    // } else {
+    //     currentPlayer = 'white'
+    // }
 
     clearMovableSpaces();
 } 
 
-function getStraightMovableSpaces(piece, x, y) {
+function isSpaceMovable(color, x, y) {    
+    if (x in board.arr && y in board.arr) {
+        let piece = board.arr[y][x];
+
+        if (piece == null) {
+            return true;
+        } else if (piece.color != color) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function getPawnSpaces(piece, x, y) {
+    let spaces = [];
+
+    let colorMod = piece.color === 'white' ? -1 : 1; 
+
+    let nextRow = y + 1 * colorMod;
+
+    if ((nextRow) in board.arr) {
+
+        if (!piece.hasMoved) {
+            spaces.push({x: x, y: y + 2 * colorMod});
+        }
+    
+        if (board.arr[nextRow][x] === null) {
+            spaces.push({x: x, y: nextRow});
+        }
+
+        if ((x + 1 < board.width) && (board.arr[nextRow][x + 1] !== null)) {
+            if (board.arr[nextRow][x + 1].color != piece.color) {
+                spaces.push({x: x + 1, y: nextRow});
+            }
+        }
+
+        if ((x - 1 > 0) && ((board.arr[nextRow][x - 1] !== null))) { 
+            if (board.arr[nextRow][x - 1].color != piece.color) {
+                spaces.push({x: x - 1, y: nextRow});
+            }
+        }
+    }
+
+    return spaces;
+}
+
+function getStraightSpaces(piece, x, y) {
     let spaces = [];
 
     let row = y + 1;
@@ -250,6 +287,174 @@ function getStraightMovableSpaces(piece, x, y) {
             break;
         }
         col--;
+    }
+
+    return spaces;
+}
+
+function getDiagonalSpaces(piece, x, y) {
+    let spaces = [];
+
+    let test = board.arr[y][x];
+
+    let row = y + 1;
+    let col = x + 1;
+    while (row < board.width && col < board.height) {
+        let currentSpace = board.arr[row][col];
+        if (currentSpace == null) {
+            spaces.push({x: col, y: row});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: col, y: row});
+            }
+
+            break;
+        }
+
+        row++;
+        col++;
+    }
+
+    row = y - 1;
+    col = x - 1;
+    while (row >= 0 && col >= 0) {
+        let currentSpace = board.arr[row][col];
+        if (currentSpace == null) {
+            spaces.push({x: col, y: row});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: col, y: row});
+            }
+
+            break;
+        }
+
+        row--;
+        col--;
+    }
+
+    row = y + 1;
+    col = x - 1;
+    while (row < board.width && col >= 0) {
+        let currentSpace = board.arr[row][col];
+        if (currentSpace == null) {
+            spaces.push({x: col, y: row});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: col, y: row});
+            }
+            
+            break;
+        }
+
+        row++;
+        col--;
+    }
+
+    row = y - 1;
+    col = x + 1;
+    while (row >= 0 && col < board.height) {
+        let currentSpace = board.arr[row][col];
+        if (currentSpace == null) {
+            spaces.push({x: col, y: row});
+        } else {
+            if (currentSpace.color != piece.color) {
+                spaces.push({x: col, y: row});
+            }
+            
+            break;
+        }
+
+        row--;
+        col++;
+    }
+
+    return spaces;
+}
+
+function getKnightSpaces(piece, x, y) {
+    let spaces = [];
+
+    if (isSpaceMovable(piece.color, x - 1, y - 2)) {
+        spaces.push({x: x - 1, y: y - 2});
+    }
+
+    if (isSpaceMovable(piece.color, x + 1, y - 2)) {
+        spaces.push({x: x + 1, y: y - 2});
+    }
+
+    if (isSpaceMovable(piece.color, x + 2, y - 1)) {
+        spaces.push({x: x + 2, y: y - 1});
+    }
+
+    if (isSpaceMovable(piece.color, x + 2, y + 1)) {
+        spaces.push({x: x + 2, y: y + 1});
+    }
+
+    if (isSpaceMovable(piece.color, x + 1, y + 2)) {
+        spaces.push({x: x + 1, y: y + 2});
+    }
+
+    if (isSpaceMovable(piece.color, x - 1, y + 2)) {
+        spaces.push({x: x - 1, y: y + 2});
+    }
+
+    if (isSpaceMovable(piece.color, x - 2, y - 1)) {
+        spaces.push({x: x - 2, y: y - 1});
+    }
+
+    if (isSpaceMovable(piece.color, x - 2, y + 1)) {
+        spaces.push({x: x - 2, y: y + 1});
+    }
+
+    return spaces;
+}
+
+function getKingSpaces(piece, x, y) {
+    let spaces = [];
+
+    if (isSpaceMovable(piece.color, x, y - 1)) {
+        spaces.push({ x: x, y: y - 1});
+    }
+
+    if (isSpaceMovable(piece.color, x + 1, y - 1)) {
+        spaces.push({ x: x + 1, y: y - 1});
+    }
+
+    if (isSpaceMovable(piece.color, x + 1, y)) {
+        spaces.push({ x: x + 1, y: y });
+    }
+
+    if (isSpaceMovable(piece.color, x + 1, y + 1)) {
+        spaces.push({ x: x + 1, y: y + 1});
+    }
+
+    if (isSpaceMovable(piece.color, x, y + 1)) {
+        spaces.push({ x: x, y: y + 1});
+    }
+
+    if (isSpaceMovable(piece.color, x + 1, y + 1)) {
+        spaces.push({ x: x + 1, y: y + 1});
+    }
+
+    if (isSpaceMovable(piece.color, x, y + 1)) {
+        spaces.push({ x: x, y: y + 1});
+    }
+
+    if (isSpaceMovable(piece.color, x - 1, y + 1)) {
+        spaces.push({ x: x - 1, y: y + 1});
+    }
+
+    if (isSpaceMovable(piece.color, x - 1, y + 1)) {
+        spaces.push({ x: x - 1, y: y + 1});
+    }
+
+    if (isSpaceMovable(piece.color, x - 1, y)) {
+        spaces.push({ x: x - 1, y: y});
+    }
+
+    if (isSpaceMovable(piece.color, x - 1, y + 1)) {
+        spaces.push({ x: x - 1, y: y + 1});
     }
 
     return spaces;
