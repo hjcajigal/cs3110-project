@@ -2,7 +2,7 @@ const htmlList = document.getElementById("list");
 const userHtml = document.getElementById("user_list");
 const nameInput = document.getElementById("name_input");
 const typeInput = document.getElementById("user_type");
-
+const logHtml = document.getElementById('log');
 
 
 console.log("Establishing SSE connection to server");
@@ -17,6 +17,7 @@ serverEvents.onerror = () => {
 };
 
 serverEvents.onmessage = (event) => {
+    console.log(event);
     const data = JSON.parse(event.data);
     console.log("Received message from server.");
     console.log("Data received: ", data);
@@ -27,7 +28,7 @@ serverEvents.onmessage = (event) => {
 
     for (let i = 0; i < charList.length; i++) {
         let listItem = document.createElement("li");
-        listItem.innerText = `${charList[i]} `;
+        listItem.innerText = `${charList[i].name} `;
 
         let editBtn = document.createElement("button");
         editBtn.innerText = "Edit";
@@ -41,8 +42,15 @@ serverEvents.onmessage = (event) => {
         
         delBtn.addEventListener("click", deleteListItem);
 
+        let modText = document.createElement("div");
+        modText.classList.add("mod-text");
+        modText.innerText = `Last modified by: ${charList[i].modifier}`
+
         listItem.appendChild(editBtn);
         listItem.appendChild(delBtn);
+        listItem.appendChild(modText);
+
+
 
         // listItem.innerHTML = `${data[i]} <button name="itemEdit${i}" value="${i}">Edit</button> <button name="itemDelete${i}" value="${i}">Delete</button>`;
         htmlList.appendChild(listItem);
@@ -54,9 +62,8 @@ serverEvents.onmessage = (event) => {
 
     let userList = data.users;
     for (let i = 0; i < userList.length; i++) {
-
         let listItem = document.createElement("li");
-        listItem.innerText = `${userList[i].username}: ${userList[i].type}`;
+        listItem.innerText = `${userList[i].username}: ${userList[i].type} `;
 
         let editBtn = document.createElement("button");
         editBtn.innerText = "Edit Type";
@@ -70,8 +77,17 @@ serverEvents.onmessage = (event) => {
         
         delBtn.addEventListener("click", deleteAdminItem);
 
+        let modText = document.createElement("div");
+        modText.classList.add("mod-text");
+        modText.innerText = `Last modified by: ${userList[i].modifier}`
+
         listItem.appendChild(editBtn);
         listItem.appendChild(delBtn);
+        listItem.appendChild(modText);
+
+        // let modTxt = document.createElement(tagName);
+
+        
 
         // listItem.innerHTML = `${data[i]} <button name="itemEdit${i}" value="${i}">Edit</button> <button name="itemDelete${i}" value="${i}">Delete</button>`;
         userHtml.appendChild(listItem);
@@ -79,6 +95,17 @@ serverEvents.onmessage = (event) => {
         // htmlList.innerHTML += `<li id="item${i}">${data[i]} </li>`
     }
 
+    logHtml.innerHTML = "";
+    for (let event of data.log) {
+        if (!event) {
+            break;
+        }
+
+        let eventItem = document.createElement('div');
+        eventItem.innerText = getEventString(event);
+
+        logHtml.appendChild(eventItem);
+    }
 }
 
 function editListItem(e) {
@@ -143,7 +170,7 @@ function editAdminItem(e) {
             Authorization: `Basic ${getAuthString()}`
         },
         body: new URLSearchParams({ user_type: typeResult,  index: itemIndex }) })
-        .then(Result => { console.log(Result); JSON.parse(Result); })
+        .then(Result => { console.log(Result); JSON.parse(Result.body); })
         .then(data => {
             console.log(data.message);
             console.log("Data sent: " + data.received);
@@ -164,7 +191,7 @@ function deleteAdminItem(e) {
         },
         body: new URLSearchParams({index: itemIndex})
         })
-        .then(Result => JSON.parse(Result))
+        .then(Result => JSON.parse(Result.body))
         .then(data => {
             console.log(data.message);
             console.log(`Data received: ${data.received}`);
@@ -247,4 +274,22 @@ adminForm.addEventListener("submit", (e) => {
 
 function getAuthString() {
     return btoa(sessionStorage.getItem("username") + ":" + sessionStorage.getItem("password"));
+}
+
+function getEventString(event) {
+    let action = '';
+
+    switch (event.action) {
+        case 'POST':
+            action = 'added';
+            break;
+        case 'PUT':
+            action = 'modified';
+            break;
+        case 'DELETE':
+            action = 'deleted'
+    }
+
+    let time = new Date();
+    return `${time.toLocaleString()} ${event.user} ${action} ${event.item}`;
 }

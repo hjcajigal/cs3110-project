@@ -28,39 +28,44 @@
             <div><input type="text" name="username" id="username" placeholder="Enter username" required></div>
             <div><label for="password">Password</label></div>
             <div><input type="password" name="password" id="password" placeholder="Enter password" required></div>
-            <div><button type="submit" >Log In</button></div>
+            <div><button type="submit">Log In</button></div>
         </form>
     </section>
 
+    <div id="editing_bay">
+        <div id="list_section">
+            <form action="/api" method="post" id="post_form">
+                <label>Character Name Input</label>
+                <div><input type="text" name="name_input" id="name_input" required></div>
+                <div><button id="add_char_btn">Add</button></div>
+            </form>
 
+            <ul id="list"></ul>
+        </div>
 
-    <div id="list_section">
-        <form action="/api" method="post" id="post_form">
-            <label>Character Name Input</label>
-            <div><input type="text" name="name_input" id="name_input" required></div>
-            <div><button id="add_char_btn">Add</button></div>
-        </form>
+        <div id="admin_panel">
+            <form action="/api/admin" method="post" id="admin_form">
+                <label>Add New User</label>
+                <div><input type="text" name="admin_name" id="admin_name" required></div>
+                <div><input type="password" name="admin_pass" id="admin_pass" required></div>
+                <div>
+                    <input type="radio" name="user_type" id="user_type_1" value="author">
+                    <label for="user_type_1">Author</label>
 
-        <ul id="list"></ul>
+                    <input type="radio" name="user_type" id="user_type_2" value="admin">
+                    <label for="user_type_2">Admin</label>
+                </div>
+                <div><button type="submit">Add User</button></div>
+            </form>
+            <ul id="user_list"></ul>
+        </div>
     </div>
 
-    <div id="admin_panel">
-        <form action="/api/admin" method="post" id="admin_form">
-            <label>Add New User</label>
-            <div><input type="text" name="admin_name" id="admin_name" required></div>
-            <div><input type="password" name="admin_pass" id="admin_pass" required></div>
-            <div>
-                <input type="radio" name="user_type" id="user_type_1" value="author">
-                <label for="user_type_1">Author</label>
-
-                <input type="radio" name="user_type" id="user_type_2" value="admin">
-                <label for="user_type_2">Admin</label>
-            </div>
-            <div><button type="submit">Add User</button></div>
-        </form>
-        <ul id="user_list"></ul>
-    </div>
-
+    <section id="log_section">
+        <h1>Log</h1>
+        <div id="log">
+        </div>
+    </section>
     <script src="request_api.js"></script>
 </body>
 
