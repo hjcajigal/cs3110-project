@@ -78,8 +78,9 @@ const BASIC_BOARD = new Board(8, 8,[
 const board = BASIC_BOARD;
 generateBoard(board);
 
-let test = document.getElementById('5-6').firstChild;
 
+
+//#region Chessboard functions
 function generateBoard(board) {
     for (let i = 0; i < board.height; i++) {
         let row = chessBoard.insertRow(-1);
@@ -222,6 +223,7 @@ function isSpaceMovable(color, x, y) {
     return false;
 }
 
+//#region Piece space functions
 function getPawnSpaces(piece, x, y) {
     let spaces = [];
 
@@ -494,3 +496,6 @@ function getKingSpaces(piece, x, y) {
 
     return spaces;
 }
+//#endregion
+
+//#endregion
