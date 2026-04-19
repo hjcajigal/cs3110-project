@@ -3,6 +3,8 @@ class Board {
     height;
     arr;
 
+    prev;
+
     constructor(width, height, arr) {
         this.width = width;
         this.height = height;
@@ -15,13 +17,31 @@ class Board {
      * @param {*} newPos The position to move the piece to.
      */
     movePiece(oldPos, newPos) {
+        let copy = [];
+        for (let i = 0; i < this.arr.length; i++) {
+            copy.push(Array.from(this.arr[i]));
+        }
+
         let piece = this.arr[oldPos.y][oldPos.x];
+        let otherPiece = this.arr[newPos.y][newPos.x];
         this.arr[oldPos.y][oldPos.x] = null;
         this.arr[newPos.y][newPos.x] = piece;
 
         piece.hasMoved = true;
 
-        updateBoard(oldPos, newPos);
+        // En passant checking and handling
+        if (piece.type == 'pawn' && oldPos.x != newPos.x && otherPiece == null) {
+            otherPiece = copy[oldPos.y][newPos.x];
+
+            let yDiff = oldPos.y - newPos.y;
+
+            this.arr[oldPos.y][newPos.x] = null;
+
+            updateBoard(oldPos, newPos, {x: newPos.x, y: oldPos.y});
+        } else {
+            updateBoard(oldPos, newPos);
+        }
+        this.prev = copy;
     }
 }
 
@@ -31,8 +51,7 @@ class Piece {
 
     hasMoved = false;
 
-    pawnTwoSpace = false;
-
+    twoSpaceMove = false;
     constructor(color, type) {
         this.type = type;
         this.color = color;
@@ -73,12 +92,18 @@ function generateBoard(board) {
     } 
 }
 
-function updateBoard(oldSpace, newSpace) {
+function updateBoard(oldSpace, newSpace, extraSpace = null) {
     const oldCell = document.getElementById(`${oldSpace.x}-${oldSpace.y}`);
     const newCell = document.getElementById(`${newSpace.x}-${newSpace.y}`);
     
     newCell.replaceChildren(oldCell.firstChild);
     oldCell.replaceChildren();
+    
+    if (extraSpace != null) {
+        const extraCell = document.getElementById(`${extraSpace.x}-${extraSpace.y}`);
+
+        extraCell.replaceChildren();
+    }
 }
 
 function setPiece(cell, piece) {
@@ -174,11 +199,11 @@ function movableSpaceHandler(e) {
     movingPiece = null;
     movingPos = {x: -1, y: -1}
     
-    // if (currentPlayer == 'white') {
-    //     currentPlayer = 'black';
-    // } else {
-    //     currentPlayer = 'white'
-    // }
+    if (currentPlayer == 'white') {
+        currentPlayer = 'black';
+    } else {
+        currentPlayer = 'white'
+    }
 
     clearMovableSpaces();
 } 
@@ -218,11 +243,21 @@ function getPawnSpaces(piece, x, y) {
             if (board.arr[nextRow][x + 1].color != piece.color) {
                 spaces.push({x: x + 1, y: nextRow});
             }
+        } else if ((x + 1 < board.width) && (board.arr[y][x + 1] !== null)) {
+            if (board.arr[y][x + 1].color != piece.color && board.arr[y][x + 1].type == 'pawn') {
+                if (board.prev[y + colorMod * 2][x + 1].type == 'pawn' && board.prev[y][x + 1] == null)
+                    spaces.push({x: x + 1, y: nextRow}); 
+            } 
         }
 
         if ((x - 1 > 0) && ((board.arr[nextRow][x - 1] !== null))) { 
             if (board.arr[nextRow][x - 1].color != piece.color) {
                 spaces.push({x: x - 1, y: nextRow});
+            }
+        } else if ((x - 1 < board.width) && (board.arr[y][x - 1] !== null)) {
+            if (board.arr[y][x - 1].color != piece.color && board.arr[y][x - 1].type == 'pawn') {
+                if (board.prev[y + colorMod * 2][x - 1].type == 'pawn' && board.prev[y][x - 1] == null)
+                    spaces.push({x: x - 1, y: nextRow}); 
             }
         }
     }
